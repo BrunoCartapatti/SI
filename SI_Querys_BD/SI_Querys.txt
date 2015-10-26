@@ -1,0 +1,180 @@
+/***********************************************************************************************************/ 
+/* Busca em árvore, o aluno define a instituição S1 e depois o departamento S2 gerando uma tabela com
+   o id dos projetos, seus títulos e palavras-chaves.
+   S1 é escolhido de uma lista pré-definida, depois de escolhido S1, uma tabela com possíveis S2 é gerada.
+   S1, S2 e S3 são strings que provavelmente serão pré-definidas e escolhidas de uma lista                 */
+
+#Query para gerar tabela com S2
+
+SELECT departamento FROM professor
+  WHERE instituicao = S1;
+
+#Query para selecionar projetos a partir de S1 e S2
+
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, cria AS c
+  WHERE pj.id = c.id_projeto AND c.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE departamento = S2);
+
+/* Após gerar a tabela anterior o aluno pode decidir filtrar por laboratório S3 gerando uma tabela de projetos
+   com as mesmas informações da tabela anterior */
+
+#Query para gerar tabela de laboratórios S3
+
+SELECT lab.nome FROM lab, mantem
+  WHERE lab.id = mantem.id_lab AND mantem.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE departamento = S2);
+
+#Query para selecionar projetos a partir de S1, S2 e S3
+
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, cria AS c
+  WHERE pj.id = c.id_projeto AND c.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE laboratorio = S3);
+
+
+/***************************************************************************************/
+/* Mesmas tabelas, mas com o aluno especificando o início e o fim dos semestres ideais */
+
+#Query para gerar tabela com S2
+
+SELECT departamento FROM professor
+  WHERE instituicao = S1;
+
+#Query para selecionar projetos a partir de S1 e S2
+
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, cria AS c
+  WHERE pj.semestre_inicio <= INICIO AND pj.semestre_fim >= FIM AND pj.id = c.id_projeto AND c.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE departamento = S2);
+
+#Query para gerar tabela de laboratórios S3
+
+SELECT lab.nome FROM lab, mantem
+  WHERE lab.id = mantem.id_lab AND mantem.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE departamento = S2);
+
+#Query para selecionar projetos a partir de S1, S2 e S3
+
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, cria AS c
+  WHERE pj.semestre_inicio <= INICIO AND pj.semestre_fim >= FIM AND pj.id = c.id_projeto AND c.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE laboratorio = S3);
+
+
+/********************************/
+/* Pesquisa por palavras-chaves */
+
+SELECT id, titulo, palavra_chave1, palavra_chave2, palavra_chave3 FROM projeto 
+  WHERE  palavra_chave1 = P OR palavra_chave2 = P OR palavra_chave3 = P;
+
+
+
+/************************************************/
+/* Informações no perfil do professor de nome N */
+
+# Dados pessoais
+SELECT email, nome, instituicao, departamento, laboratorio, link_lattes FROM professor
+  WHERE nome = N;
+
+# Projetos criados
+SELECT projeto.nome FROM projeto, cria
+  WHERE projeto.id = cria.id_projeto AND cria.id_professor IN 
+    (SELECT nusp FROM professor
+      WHERE nome = N);
+
+# Projetos vinculados
+SELECT projeto.nome FROM projeto, vincula
+  WHERE projeto.id = vincula.id_projeto AND vincula.id_professor IN
+    (SELECT nusp FROM professor
+      WHERE nome = N);
+
+
+/********************************************/
+/* Informações no perfil do aluno de nome N */
+
+# Dados pessoais
+SELECT email, nome, instituicao, link_lattes, codigo_CV, codigo_hist FROM aluno
+  WHERE nome = N;
+
+# Projetos candidatados
+SELECT projeto.nome FROM projeto, candidata
+  WHERE projeto.id = candidata.id_projeto AND candidata.id_aluno IN
+    (SELECT nusp FROM aluno
+      WHERE nome = N);
+
+# Projetos vinculados
+SELECT projeto.nome FROM projeto, vincula
+  WHERE projeto.id = vincula.id_projeto AND vincula.id_aluno IN
+    (SELECT nusp FROM aluno
+      WHERE nome = N);
+
+/*************************************************/
+/* Informações no perfil do assistente de nome N */
+
+# Dados pessoais
+SELECT email, nome, instituicao, departamento, laboratorio, link_lattes
+  WHERE nome = N;
+
+# Projetos vinculados
+SELECT projeto.nome FROM projeto, vincula
+  WHERE projeto.id = vincula.id_projeto AND vincula.id_assistente IN
+    (SELECT nusp FROM assistente
+      WHERE nome = N);
+
+/**********************************************/
+/* Informações no perfil do projeto de nome N */
+
+#Informações do projeto
+SELECT titulo, descricao, palavra_chave1, palavra_chave2, palavra_chave3, semestre_inicio, semestre_fim, patrocinador FROM projeto
+  WHERE titulo = N;
+
+
+# Professor responsável
+SELECT professor.nome FROM professor, cria
+  WHERE professor.nusp = cria.id_professor AND cria.id_projeto IN
+    (SELECT id FROM projeto
+      WHERE titulo = N);
+
+# Alunos candidatados
+SELECT aluno.nome FROM aluno, candidata
+  WHERE aluno.nusp = candidata.id_aluno AND candidata.id_projeto IN
+    (SELECT id FROM projeto
+      WHERE titulo = N);
+
+# Laboratório 
+SELECT lab.nome FROM lab, projeto
+   WHERE projeto.titulo = N AND projeto.id_lab = lab.id;
+
+
+# Vínculos
+SELECT aluno.nome FROM aluno, vincula
+  WHERE aluno.nusp = vincula.id_aluno AND vincula.id_projeto IN
+    (SELECT id FROM projeto
+      WHERE titulo = N);
+
+SELECT assistente.nome FROM assistente, vincula
+  WHERE assistente.nusp = vincula.id_assistente AND vincula.id_projeto IN
+    (SELECT id FROM projeto
+      WHERE titulo = N);
+
+/**************************************************/
+/* Informações no perfil do laboratório de nome N */
+
+# Informações do lab
+SELECT nome, departamento, descricao, link_site FROM lab
+  WHERE nome = N;
+
+# Projetos criados
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, cria AS c
+  WHERE pj.id = c.id_projeto AND c.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE laboratorio = N);
+
+# Projetos vinculados (iniciados)
+SELECT pj.id, pj.titulo, pj.palavra_chave1, pj.palavra_chave2, pj.palavra_chave3 FROM projeto AS pj, vincula AS v
+  WHERE pj.id = v.id_projeto AND v.id_professor IN
+    (SELECT nusp FROM professor  
+      WHERE laboratorio = N);
